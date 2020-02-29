@@ -23,12 +23,12 @@ def main(args):
     m =  args[0]
     dht = Hash_Table.DHT(m)
     # L = list(set([random.randrange(0, 16, 1) for i in range(10)]))
-    L = [1,7,9,11,12,14,15]
+    L = range(16)
     print(L)
     for i in L:
 
         print(i)
-        dht.add_node(i)
+        dht.add_node(ide = i)
         print("Node added successfully")
     
     for i in range(len(L)):
