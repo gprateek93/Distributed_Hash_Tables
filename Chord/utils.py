@@ -1,4 +1,6 @@
 import math
+import random
+from hashlib import sha1
 
 def contains(start_id, end_id,node_id):
     '''Keywords: 'start_id' is the starting index of the limit. 'end_id' is the ending index of the limit. 'node_id' is the index of the queried node
@@ -18,7 +20,14 @@ def contains(start_id, end_id,node_id):
 def calculate_interval(ide,i,m):
     '''Keywords: 'ide' is the id of the queried node. 'i' is the index of the finger whose location is neede. 'm' is the number of hash bits.
        Functions: This function is used to calculate the id of the ith finger of the node with id = ide '''
-       
+
     res = ide + math.pow(2,i)
     return int(res%math.pow(2,m))
+
+def generate_id(name):
+    '''Keywords: 'name' is the name of the file/IP address of the node
+       Function: Generates a unique ID of the given name using the SHA-1 encryption '''
+
+    result = sha1(name.encode())
+    return int(result.hexdigest(),16)
 

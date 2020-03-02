@@ -4,39 +4,50 @@ class Node:
     ''' This class defines the bsic structure of a node in the distributed hash table. 
     It defines the attributes of the node and its functions'''
 
-    def __init__(self,node_list = [], m = 160,ide = 0):
-        '''Keywords: 'node_list' is the list of nodes in the dht. 'm' is the number of hash bits. 'ide' is the ide of the node.
+    def __init__(self,node_list = {}, m = 160,ide = 0):
+        '''Keywords: 'node_list' is the dictionary of nodes in the dht. 'm' is the number of hash bits. 'ide' is the ide of the node.
            Function: Initialises a new node with the given ide'''
         self.m = m
         self.ide = ide
         self.finger_table = [] #initialize an empty finger table. Entry in a row is tuple <start_id,end_id,successor_node,successor node id>
         self.pred = self #initialise the node with the predecessor pointer pointing to itself.
+        self.key_values = {} #initialize the key values of data stored in the node.
         if len(node_list) == 0: #this is the first node in our dht
             finger_table = [] 
             for i in range(m):
                 finger_table.append([calculate_interval(self.ide,i,m), calculate_interval(self.ide,i+1,m),self,self.ide]) #As it is the first node all the fingers will have same successor node that is the self node.
             self.finger_table = finger_table
         else: # Chose a random node in the dht and use that node to join the dht.
-            self.join(node_list[0])
+            self.join(list(node_list.values())[0])
     
     def successor(self):
         '''This function takes returns the successor of the given node. The successor of the node is the first node in the node's finger table. '''
         return self.finger_table[0][2]
 
-    def find_succ(self,ide):
+    def find_succ(self,ide,logs=False):
         '''Keywords: 'ide' is the id of the node/resource whose successor is needed.
            Function: This function asks the self node to find the successor of the node/resource with id = 'ide'.'''
         
-        n_ = self.find_pred(ide)
+        n_ = self.find_pred(ide,logs)
+        if logs:
+            print(str(n_.successor().ide))
         return n_.successor() #successor of a node/resource is the successor of the predecessor of the node in the present network
     
-    def find_pred(self,ide):
+    def find_pred(self,ide,logs=False):
         '''Keywords: 'ide' is the id of the node/resource whose predecessor is needed.
            Function: This function asks the self node to find the predecessor of a node/resource with ide = ide'''
 
         n_ = self
+        n_succ = self.successor()
+        if(logs):
+            print(str(self.ide)+"-->",end="")
         while not contains(n_.ide,n_.successor().ide,ide) and ide != n_.successor().ide: #run the loop until the ide comes between a node and its sucessor.
+            if(n_.ide == n_succ.ide):
+                break
             n_ = n_.find_Closest_Preceding_Finger(ide)
+            n_succ = n_.successor()
+            if(logs):
+                print(str(n_.ide)+"-->",end="")
         return n_
 
     def find_Closest_Preceding_Finger(self,ide):
@@ -93,18 +104,28 @@ class Node:
                 pred = self.find_pred(val)
             if pred.ide == self.ide: #no need to update the finger table of the pred node as it is the same self node.
                 continue
-            pred.update_Finger_Table(self,i)
+            pred.update_Finger_Table(self,i,flag = 'add')
         
-    def update_Finger_Table(self,node,i):
+    def update_Finger_Table(self,node,i,flag = 'add'):
         '''Keywords: 'node' is the node who has affected the self node by getting added into the network.
                       'i' is the number of the finger table entry which might be affected.
+                      'flag' tells which operation calls the update finger table method.
            Function: This function updates self node's finger table if ith finger of the self node is the new node. '''
 
-    
-        if self.ide == node.ide or contains(node.successor().ide, self.finger_table[i][2].ide,node.ide):
-            self.finger_table[i][2] = node
-            self.finger_table[i][3] = self.finger_table[i][2].ide
-            pred = self.pred #get the first node preceding self as chances are that it also needs to be updated.
-            if pred.ide != node.ide:
-                pred.update_Finger_Table(node,i)
+        if flag == 'add': #called by add node procedure
+            if self.ide == node.ide or contains(self.ide, self.finger_table[i][2].ide,node.ide): #if node id is between its self node and the ith finger of self node then the ith finger of the self node is to be updated
+                self.finger_table[i][2] = node
+                self.finger_table[i][3] = self.finger_table[i][2].ide
+                pred = self.pred #get the first node preceding self as chances are that it also needs to be updated.
+                if pred.ide != node.ide:
+                    pred.update_Finger_Table(node,i)
+        
+        elif flag == 'delete': #called by delete node procedure
+            if(self.finger_table[i][3] == node.ide): #if node is the ith finger of self node then the ith finger node has to be updated with node's successor.
+                self.finger_table[i][2] = node.successor()
+                self.finger_table[i][3] = self.finger_table[i][2].ide
+                pred = self.pred
+                pred.update_Finger_Table(node,i,flag)
+
+        
     
