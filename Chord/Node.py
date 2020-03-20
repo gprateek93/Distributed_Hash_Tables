@@ -24,19 +24,23 @@ class Node:
         '''This function takes returns the successor of the given node. The successor of the node is the first node in the node's finger table. '''
         return self.finger_table[0][2]
 
-    def find_succ(self,ide,logs=False):
+    def find_succ(self,ide,logs=False,countHops=False):
         '''Keywords: 'ide' is the id of the node/resource whose successor is needed.
            Function: This function asks the self node to find the successor of the node/resource with id = 'ide'.'''
-        
-        n_ = self.find_pred(ide,logs)
+        if countHops:
+            n_,hops = self.find_pred(ide,logs,countHops)
+        else:
+            n_ = self.find_pred(ide,logs,countHops)
         if logs:
             print(str(n_.successor().ide))
+        if countHops:
+            return n_.successor(),hops+1
         return n_.successor() #successor of a node/resource is the successor of the predecessor of the node in the present network
     
-    def find_pred(self,ide,logs=False):
+    def find_pred(self,ide,logs=False,countHops=False):
         '''Keywords: 'ide' is the id of the node/resource whose predecessor is needed.
            Function: This function asks the self node to find the predecessor of a node/resource with ide = ide'''
-
+        hops  = 0
         n_ = self
         n_succ = self.successor()
         if(logs):
@@ -48,7 +52,11 @@ class Node:
             n_succ = n_.successor()
             if(logs):
                 print(str(n_.ide)+"-->",end="")
-        return n_
+            hops+=1
+        if countHops:
+            return n_,hops
+        else:
+            return n_
 
     def find_Closest_Preceding_Finger(self,ide):
         '''Keywords: 'ide' is the id of the node/resource.

@@ -14,6 +14,9 @@ class DHT:
         self.total_nodes = 0 #Keeps track of the number of nodes in the hash table.
         self.total_files = 0 #Keeps track of the number of files in the hash table
         self.node_list = {} #Keeps track of the nodes entered in the hash table.
+        self.search_queries = 0
+        self.total_hops = 0
+        self.hop = []
 
     def add_node(self,ide):
         '''Keywords: 'ide' is the id of the node to be added in the network 
@@ -79,7 +82,7 @@ class DHT:
             print("File with id "+str(ide)+" added in the dht successfully at the node with id "+str(file_node.ide)+".")
             return True
  
-    def file_lookup(self,ide,logs=False):
+    def file_lookup(self,ide,logs=False, flush=False):
         '''Keywords: 'ide' is the id of the file.
                      'logs' is the keyword to turn on and off log genration
            Function: This function tells the location of file with id = ide in the dht. '''
@@ -91,10 +94,17 @@ class DHT:
             print("Error: The DHT has no file in it.")
             return
         else:
+            if flush:
+                self.search_queries = 0
+                self.total_hops = 0
+            else:
+                self.search_queries +=1 
             node = list(self.node_list.values())[0] #find a helper node
             print("Lookup for the file with id "+str(ide)+": ", end = "")
-            file_node = node.find_succ(ide,logs=logs) #store the file at its successor
+            file_node,hops = node.find_succ(ide,logs=logs,countHops = True) #store the file at its successor
             try:
+                self.total_hops+=hops
+                self.hop.append(hops)
                 data = file_node.key_values[ide]
                 print("Data fetched successfully.")
                 return data
